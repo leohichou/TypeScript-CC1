@@ -56,7 +56,7 @@ If you're using a package manager (e.g., npm) and bundler (like Webpack or Vite)
     npm install
 
 3. **Compile the TypeScript Code:**
-Ensure you have a valid 'tsconfig.json' For example:
+Ensure you have a valid `tsconfig.json` For example:
     ```json
     {
     "compilerOptions": {
