@@ -40,7 +40,7 @@ This project is a web-based Coffee Shop Management application that allows users
   The project is built using ES Modules, ensuring a modern module system for browser-based applications.
 
 ## Project Structure
-![Uploading Screenshot 2025-04-11 at 20.36.20.png…]()
+![Project Screenshot](assets/ProjectStructure.png)
 
 
 ## Installation and Setup
