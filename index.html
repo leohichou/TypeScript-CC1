@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coffee Shop</title>
+    <script defer type="module" src="/dist/main.js"></script>
+    <style>
+        /* General Body Styling */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #4CAF50;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .coffee-selection,
+        .customization-selection,
+        .order-summary,
+        .order-history,
+        .logs {
+            background-color: #fff;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        h3 {
+            color: #333;
+        }
+
+        select,
+        button,
+        label input {
+            padding: 10px;
+            font-size: 16px;
+            margin-top: 10px;
+            cursor: pointer;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        select:focus,
+        button:hover {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        label {
+            display: block;
+            margin: 10px 0;
+        }
+
+        .order-summary p {
+            margin-top: 10px;
+        }
+
+        .logs {
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+            background-color: #f9f9f9;
+        }
+
+        .order-history ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .order-history li {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .order-history li:last-child {
+            border-bottom: none;
+        }
+
+        .order-history h2 {
+            color: #4CAF50;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Coffee Shop Management</h1>
+
+        <div class="container">
+            <h1>Coffee Shop Management</h1>
+
+            <!-- Coffee Selection -->
+            <div class="coffee-selection">
+                <h3>Select Your Coffee</h3>
+                <select id="coffeeSelect">
+                    <option value="espresso">Espresso</option>
+                    <option value="latte">Latte</option>
+                    <option value="cappuccino">Cappuccino</option>
+                </select>
+            </div>
+
+            <!-- Customization Selection -->
+            <div class="customization-selection">
+                <h3>Customize Your Coffee</h3>
+                <label><input type="checkbox" id="milk"> Milk</label>
+                <label><input type="checkbox" id="sugar"> Sugar</label>
+                <label><input type="checkbox" id="whippedCream"> Whipped Cream</label>
+            </div>
+
+            <!-- Order Summary -->
+            <div class="order-summary">
+                <h3>Your Order</h3>
+                <p id="orderDetails">No order selected yet.</p>
+                <button id="placeOrderBtn">Place Order</button>
+            </div>
+
+            <!-- Logs -->
+            <div class="logs" id="logs"></div>
+
+            <!-- Order History -->
+            <div class="order-history">
+                <h2>Order History</h2>
+                <ul id="orderHistoryList">
+                    <!-- Previous orders will be listed here -->
+                </ul>
+            </div>
+
+        </div>
+
+        <script type="module">
+            import { openDB } from './src/utils/db.ts';
+
+            // Log output to display on the page
+            const logsDiv = document.getElementById('logs');
+
+            function log(message) {
+                const logMessage = document.createElement('p');
+                logMessage.textContent = message;
+                logsDiv.appendChild(logMessage);
+            }
+
+            // Button and logic for placing the order
+            document.getElementById('placeOrderBtn').addEventListener('click', async () => {
+                try {
+                    const coffeeSelect = document.getElementById('coffeeSelect').value;
+                    const milk = document.getElementById('milk').checked;
+                    const sugar = document.getElementById('sugar').checked;
+                    const whippedCream = document.getElementById('whippedCream').checked;
+
+                    // Create coffee order and apply customizations
+                    const customCoffee = await createCustomOrder(coffeeSelect, milk, sugar, whippedCream);
+
+                    // Update order summary
+                    document.getElementById('orderDetails').textContent = `Custom Order: ${customCoffee.description} - $${customCoffee.cost().toFixed(2)}`;
+
+                    // Log and place the order
+                    log(`Custom Coffee Order Created: ${customCoffee.description} - $${customCoffee.cost().toFixed(2)}`);
+
+                    // Save order (this would go into IndexedDB)
+                    await placeOrder(customCoffee);
+
+                    // Update order history
+                    loadOrderHistory();
+                } catch (error) {
+                    log('Error placing order: ' + error);
+                }
+            });
+
+            // Function to create a custom coffee order
+            async function createCustomOrder(coffeeType, milk, sugar, whippedCream) {
+                const manager = new Manager();
+                let customCoffee = manager.createOrder(coffeeType, []);
+
+                if (milk) customCoffee = new Milk(customCoffee);
+                if (sugar) customCoffee = new Sugar(customCoffee);
+                if (whippedCream) customCoffee = new WhippedCream(customCoffee);
+
+                return customCoffee;
+            }
+
+            // Function to place the order (save to IndexedDB)
+            async function placeOrder(customCoffee) {
+                const db = await openDB();  // Open the IndexedDB
+
+                const order = {
+                    coffeeId: customCoffee.id,  // Coffee ID dynamically fetched
+                    description: customCoffee.description,
+                    quantity: 1,
+                    totalPrice: customCoffee.cost(),
+                    date: new Date().toISOString(),
+                };
+
+                const transaction = db.transaction('orders', 'readwrite');
+                const objectStore = transaction.objectStore('orders');
+                const request = objectStore.add(order);
+
+                request.onsuccess = () => {
+                    log(`Order placed: ${customCoffee.description} - $${customCoffee.cost().toFixed(2)}`);
+                };
+
+                request.onerror = (event) => {
+                    log('Error placing order in IndexedDB: ' + event.target.error);
+                };
+            }
+
+            // Function to load orders from IndexedDB
+            async function loadOrderHistory() {
+                const db = await openDB();  // Open the IndexedDB
+
+                const transaction = db.transaction('orders', 'readonly');
+                const objectStore = transaction.objectStore('orders');
+                const request = objectStore.getAll();  // Get all orders
+
+                request.onsuccess = (event) => {
+                    const orders = event.target.result;
+                    const orderHistoryList = document.getElementById('orderHistoryList');
+                    orderHistoryList.innerHTML = '';  // Clear previous order history
+
+                    orders.forEach(order => {
+                        const listItem = document.createElement('li');
+                        listItem.textContent = `Order for ${order.coffeeId} - Quantity: ${order.quantity} - Total: $${order.totalPrice}`;
+                        orderHistoryList.appendChild(listItem);
+                    });
+                };
+
+                request.onerror = (event) => {
+                    log('Error loading orders from IndexedDB: ' + event.target.error);
+                };
+            }
+
+            // Call loadOrderHistory on page load to populate the order history section
+            window.onload = loadOrderHistory;
+
+
+        </script>
+
+
+</body>
+
+</html>

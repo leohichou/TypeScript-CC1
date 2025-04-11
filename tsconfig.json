@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "es2017", // ✅ Allow async/await
+    "module": "esnext", // ✅ Allow top-level await
+    "moduleResolution": "node",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true
+  }
+}
