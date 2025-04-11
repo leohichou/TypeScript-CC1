@@ -75,5 +75,6 @@ Ensure you have a valid `tsconfig.json` For example:
 
 Then compile with:
 
-bastsc
-s
+ ```bash
+       tsc
+
