@@ -1,0 +1,26 @@
+import { Coffee } from "./Coffee.js";
+
+export abstract class Customization extends Coffee {
+  constructor(protected coffee: Coffee) {
+    super();
+  }
+  abstract cost(): number;
+  get description(): string {
+    return this.coffee.description;
+  }
+}
+
+export class Milk extends Customization {
+  cost() { return this.coffee.cost() + 0.5; }
+  get description() { return this.coffee.description + ", Milk"; }
+}
+
+export class Sugar extends Customization {
+  cost() { return this.coffee.cost() + 0.2; }
+  get description() { return this.coffee.description + ", Sugar"; }
+}
+
+export class WhippedCream extends Customization {
+  cost() { return this.coffee.cost() + 0.7; }
+  get description() { return this.coffee.description + ", Whipped Cream"; }
+}
